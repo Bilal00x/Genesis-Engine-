@@ -1,0 +1,57 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../base/backend-deployment.yaml
+- ../../base/frontend-deployment.yaml
+- ../../base/worker-deployment.yaml
+- ../../base/postgres-statefulset.yaml
+- ../../base/redis-statefulset.yaml
+- ../../base/minio-statefulset.yaml
+- ../../base/ingress.yaml
+- ../../base/secrets.yaml
+
+patchesStrategicMerge:
+- backend-deployment-patch.yaml
+- frontend-deployment-patch.yaml
+- worker-deployment-patch.yaml
+- postgres-statefulset-patch.yaml
+- redis-statefulset-patch.yaml
+- minio-statefulset-patch.yaml
+
+configMapGenerator:
+- name: ai-game-studio-config
+  literals:
+  - ENVIRONMENT=production
+  - API_URL=https://api.aigamestudio.com
+  - FRONTEND_URL=https://aigamestudio.com
+
+secretGenerator:
+- name: ai-game-studio-secrets
+  type: Opaque
+  literals:
+  - DATABASE_URL=postgresql://postgres:your-production-postgres-password@ai-game-studio-postgres:5432/ai_game_studio
+  - REDIS_URL=redis://ai-game-studio-redis:6379/0
+  - REDIS_CACHE_URL=redis://ai-game-studio-redis:6379/1
+  - POSTGRES_PASSWORD=your-production-postgres-password
+  - AWS_ACCESS_KEY_ID=your-production-aws-access-key-id
+  - AWS_SECRET_ACCESS_KEY=your-production-aws-secret-access-key
+  - AWS_S3_BUCKET=ai-game-studio-prod
+  - STRIPE_SECRET_KEY=sk_live_your-production-stripe-secret-key
+  - STRIPE_PUBLISHABLE_KEY=pk_live_your-production-stripe-publishable-key
+  - JWT_SECRET_KEY=your-production-super-secret-jwt-key-change-in-production
+  - MINIO_ROOT_USER=minioadmin
+  - MINIO_ROOT_PASSWORD=your-production-minio-password
+  - SMTP_HOST=smtp.gmail.com
+  - SMTP_PORT=587
+  - SMTP_USER=your-production-email@gmail.com
+  - SMTP_PASSWORD=your-production-email-password
+  - EMAIL_FROM=noreply@aigamestudio.com
+
+images:
+- name: your-registry.ai-game-studio/backend
+  newTag: v1.0.0
+- name: your-registry.ai-game-studio/frontend
+  newTag: v1.0.0
+- name: your-registry.ai-game-studio/worker
+  newTag: v1.0.0

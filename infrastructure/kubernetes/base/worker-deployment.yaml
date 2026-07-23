@@ -1,0 +1,120 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-game-studio-worker
+  labels:
+    app: ai-game-studio
+    component: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-game-studio
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: ai-game-studio
+        component: worker
+    spec:
+      containers:
+      - name: worker
+        image: your-registry.ai-game-studio/worker:latest
+        command: ["celery", "-A", "app.core.celery_app", "worker", "-l", "info", "-Q", "celery"]
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ai-game-studio-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: ai-game-studio-secrets
+              key: redis-url
+        - name: REDIS_CACHE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ai-game-studio-secrets
+              key: redis-cache-url
+        - name: STORAGE_TYPE
+          value: "s3"
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: ai-game-studio-secrets
+              key: aws-access-key-id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-game-studio-secrets
+              key: aws-secret-access-key
+        - name: AWS_REGION
+          value: "us-east-1"
+        - name: AWS_S3_BUCKET
+          valueFrom:
+            secretKeyRef:
+              name: ai-game-studio-secrets
+              key: aws-s3-bucket
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-game-studio-secrets
+              key: stripe-secret-key
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-game-studio-secrets
+              key: jwt-secret-key
+        - name: ENVIRONMENT
+          value: "production"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - celery
+            - -A
+            - app.core.celery_app
+            - inspect
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - celery
+            - -A
+            - app.core.celery_app
+            - inspect
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: logs-volume
+          mountPath: /app/logs
+      volumes:
+      - name: logs-volume
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-game-studio-worker
+  labels:
+    app: ai-game-studio
+    component: worker
+spec:
+  selector:
+    app: ai-game-studio
+    component: worker
+  ports:
+    - protocol: TCP
+      port: 5555
+      targetPort: 5555
+  type: ClusterIP

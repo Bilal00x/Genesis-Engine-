@@ -1,0 +1,368 @@
+openapi: 3.0.3
+info:
+  title: AI Game Studio API
+  description: Production-ready SaaS platform for AI-powered game development
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@aigamestudio.com
+
+servers:
+  - url: https://api.aigamestudio.com/v1
+    description: Production
+  - url: https://staging-api.aigamestudio.com/v1
+    description: Staging
+  - url: http://localhost:8000/v1
+    description: Local Development
+
+tags:
+  - name: Authentication
+  - name: Users
+  - name: Organizations
+  - name: Projects
+  - name: Assets
+  - name: Workflows
+  - name: Generations
+  - name: Exports
+  - name: Payments
+  - name: Admin
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          nullable: true
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+        avatar_url:
+          type: string
+        role:
+          type: string
+          enum: [admin, user, viewer]
+        credits:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Asset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [image, model_3d, animation, audio, code]
+        name:
+          type: string
+        file_path:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Generation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        progress:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+paths:
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, display_name]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                display_name:
+                  type: string
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Bad request
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Success
+        '401':
+          description: Unauthorized
+
+  /projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      responses:
+        '200':
+          description: Success
+    post:
+      tags: [Projects]
+      summary: Create project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /projects/{id}:
+    get:
+      tags: [Projects]
+      summary: Get project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+    put:
+      tags: [Projects]
+      summary: Update project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+    delete:
+      tags: [Projects]
+      summary: Delete project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  /assets:
+    get:
+      tags: [Assets]
+      summary: List assets
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: project_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+    post:
+      tags: [Assets]
+      summary: Upload asset
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                name:
+                  type: string
+                type:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /generations/image:
+    post:
+      tags: [Generations]
+      summary: Generate image
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                negative_prompt:
+                  type: string
+                provider:
+                  type: string
+      responses:
+        '202':
+          description: Accepted
+        '400':
+          description: Bad request
+
+  /generations/3d:
+    post:
+      tags: [Generations]
+      summary: Generate 3D model
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                provider:
+                  type: string
+      responses:
+        '202':
+          description: Accepted
+
+  /generations/{id}:
+    get:
+      tags: [Generations]
+      summary: Get generation status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+
+  /exports:
+    post:
+      tags: [Exports]
+      summary: Create export job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                asset_ids:
+                  type: array
+                  items:
+                    type: string
+                format:
+                  type: string
+      responses:
+        '202':
+          description: Accepted
+
+  /payments/plans:
+    get:
+      tags: [Payments]
+      summary: List subscription plans
+      security: []
+      responses:
+        '200':
+          description: Success
+
+  /payments/subscribe:
+    post:
+      tags: [Payments]
+      summary: Create subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                plan_id:
+                  type: string
+      responses:
+        '201':
+          description: Created

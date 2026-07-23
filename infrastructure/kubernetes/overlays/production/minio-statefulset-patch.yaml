@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ai-game-studio-minio
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: minio
+        image: minio/minio
+        args:
+        - server
+        - /data
+        - --console-address
+        - ":9001"
+        - --address
+        - ":9000"
+        - --config-dir
+        - /root/.minio
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        env:
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: ai-game-studio-secrets
+              key: minio-root-user
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ai-game-studio-secrets
+              key: minio-root-password
+        - name: MINIO_DOMAIN
+          value: "minio.aigamestudio.com"
+        - name: MINIO_STORAGE_CLASS_REDUNDANCY
+          value: "4"
+        - name: MINIO_CACHE_DRIVES
+          value: "/data"
+        - name: MINIO_CACHE_MAX_SIZE
+          value: "10GB"
+        - name: MINIO_CACHE_EXPIRY
+          value: "72h"
+        - name: MINIO_CACHE_WATERMARK_LOW
+          value: "70"
+        - name: MINIO_CACHE_WATERMARK_HIGH
+          value: "85"
+        - name: MINIO_CACHE_BACKGROUND
+          value: "on"
+        - name: MINIO_CACHE_WRITE_BUFFER_SIZE
+          value: "10MB"
+        - name: MINIO_CACHE_READ_BUFFER_SIZE
+          value: "10MB"
+        - name: MINIO_CACHE_WRITE_QUEUE_SIZE
+          value: "100"
+        - name: MINIO_CACHE_READ_QUEUE_SIZE
+          value: "100"
+        - name: MINIO_CACHE_READ_AHEAD
+          value: "on"
+        - name: MINIO_CACHE_READ_AHEAD_SIZE
+          value: "10MB"
+        - name: MINIO_CACHE_READ_AHEAD_QUEUE_SIZE
+          value: "100"
+        - name: MINIO_CACHE_READ_AHEAD_EXPIRY
+          value: "1h"
+        - name: MINIO_CACHE_READ_AHEAD_WATERMARK_LOW
+          value: "70"
+        - name: MINIO_CACHE_READ_AHEAD_WATERMARK_HIGH
+          value: "85"
+        - name: MINIO_CACHE_READ_AHEAD_BACKGROUND
+          value: "on"
+        - name: MINIO_CACHE_READ_AHEAD_WRITE_BUFFER_SIZE
+          value: "10MB"
+        - name: MINIO_CACHE_READ_AHEAD_READ_BUFFER_SIZE
+          value: "10MB"
+        - name: MINIO_CACHE_READ_AHEAD_WRITE_QUEUE_SIZE
+          value: "100"
+        - name: MINIO_CACHE_READ_AHEAD_READ_QUEUE_SIZE
+          value: "100"
+        - name: MINIO_CACHE_READ_AHEAD_READ_AHEAD
+          value: "on"
+        - name: MINIO_CACHE_READ_AHEAD_READ_AHEAD_SIZE
+          value: "10MB"
+        - name: MINIO_CACHE_READ_AHEAD_READ_AHEAD_QUEUE_SIZE
+          value: "100"
+        - name: MINIO_CACHE_READ_AHEAD_READ_AHEAD_EXPIRY
+          value: "1h"
+        - name: MINIO_CACHE_READ_AHEAD_READ_AHEAD_WATERMARK_LOW
+          value: "70"
+        - name: MINIO_CACHE_READ_AHEAD_READ_AHEAD_WATERMARK_HIGH
+          value: "85"
+        - name: MINIO_CACHE_READ_AHEAD_READ_AHEAD_BACKGROUND
+          value: "on"

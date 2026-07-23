@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-game-studio-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - api.aigamestudio.com
+    - aigamestudio.com
+    secretName: ai-game-studio-tls
+  rules:
+  - host: api.aigamestudio.com
+    http:
+      paths:
+      - path: /v1/(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-game-studio-backend
+            port:
+              number: 80
+  - host: aigamestudio.com
+    http:
+      paths:
+      - path: /(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-game-studio-frontend
+            port:
+              number: 80

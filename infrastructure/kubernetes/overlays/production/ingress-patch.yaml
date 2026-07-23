@@ -1,0 +1,52 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-game-studio-ingress
+spec:
+  tls:
+  - hosts:
+    - api.aigamestudio.com
+    - aigamestudio.com
+    secretName: ai-game-studio-tls
+  rules:
+  - host: api.aigamestudio.com
+    http:
+      paths:
+      - path: /v1/(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-game-studio-backend
+            port:
+              number: 80
+  - host: aigamestudio.com
+    http:
+      paths:
+      - path: /(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-game-studio-frontend
+            port:
+              number: 80
+  # Add additional rules for other services if needed
+  - host: minio.aigamestudio.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-game-studio-minio
+            port:
+              number: 9000
+  - host: flower.aigamestudio.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-game-studio-worker
+            port:
+              number: 5555
